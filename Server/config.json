@@ -1,0 +1,22 @@
+{
+    "zmq": {
+        "protocol": "tcp",
+        "host": "localhost",
+        "port": 9265,
+        "topics": {
+            "speech_to_text": "Wanko.STT",
+            "text_to_speech": "Wanko.TTS",
+            "natural_language_generation": "Wanko.NLG"
+        }
+    },
+    "whisper": {
+        "model": "base.en",
+        "energy_threshold": 1000,
+        "record_timeout": 2.0,
+        "phrase_timeout": 2.0
+    },
+    "cai": {
+        "token": "",
+        "char": "D_ZmzC4orhpu6S7UXmW-PIS0X5qFm1qnzukot7v6vWI"
+    }
+}
