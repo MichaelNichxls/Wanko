@@ -6,8 +6,8 @@ from time import sleep
 
 # TODO: Redo or rename
 from config import Config
-from speech_to_text import speech_to_text
-from natural_language_generation import natural_language_generation
+from speech_to_text import speech_to_text as stt
+from natural_language_generation import natural_language_generation as nlg
 
 # TODO: Do this better
 Config.load_config("config.json")
@@ -33,8 +33,8 @@ if __name__ == "__main__":
         stop_event = Event()
 
         # TODO: Probably don't need kwargs
-        stt_thread = Thread(target=speech_to_text, kwargs={"publisher": publisher, "stop_event": stop_event})
-        nlg_thread = Thread(target=natural_language_generation, kwargs={"publisher": publisher, "subscriber": subscriber, "stop_event": stop_event})
+        stt_thread = Thread(target=stt, kwargs={"publisher": publisher, "stop_event": stop_event})
+        nlg_thread = Thread(target=nlg, kwargs={"publisher": publisher, "subscriber": subscriber, "stop_event": stop_event})
 
         try:
             stt_thread.start()
