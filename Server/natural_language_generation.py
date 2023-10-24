@@ -1,12 +1,16 @@
 import logging
+import os
 import zmq
 
-from config import Config
 # TODO: as
 from characterai import PyCAI, errors
+from config import Config
+from dotenv import load_dotenv
 from threading import Event
 from typing import Optional
 # from time import sleep
+
+load_dotenv()
 
 # TODO: Do this better, like an __init__ file
 Config.load_config("config.json")
@@ -19,7 +23,7 @@ _TOPIC_STT = config["zmq"]["topics"]["speech_to_text"]
 _TOPIC_NLG = config["zmq"]["topics"]["natural_language_generation"]
 
 # TODO: "char_token", or whatever
-_TOKEN = config["cai"]["token"]
+_TOKEN = config["cai"]["token"] or os.getenv("CAI_TOKEN")
 _CHAR = config["cai"]["char"]
 
 # TODO: Rename to generate_text()?
