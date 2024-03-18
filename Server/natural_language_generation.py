@@ -23,6 +23,7 @@ _TOPIC_STT = config["zmq"]["topics"]["speech_to_text"]
 _TOPIC_NLG = config["zmq"]["topics"]["natural_language_generation"]
 
 # TODO: "char_token", or whatever
+# FIXME: Other way around
 _TOKEN = config["cai"]["token"] or os.getenv("CAI_TOKEN")
 _CHAR = config["cai"]["char"]
 
@@ -30,7 +31,6 @@ _CHAR = config["cai"]["char"]
 # TODO: from zmq import Socket idfk
 def natural_language_generation(*, publisher: zmq.Socket, subscriber: zmq.Socket, stop_event: Optional[Event] = None) -> None:
     client = PyCAI(_TOKEN)
-    client.start()
     # TODO: Log
 
     chat = client.chat.get_chat(_CHAR)
