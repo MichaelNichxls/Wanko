@@ -1,39 +1,20 @@
 import logging
-import os
 import zmq
 
+from config import Config
 # TODO: as
 from characterai import PyCAI, errors
-from config import Config
-from dotenv import load_dotenv
 from threading import Event
 from typing import Optional
 # from time import sleep
 
-load_dotenv()
-
-# TODO: Do this better, like an __init__ file
-Config.load_config("config.json")
-config = Config.get_config()
-
-_URL_PUB = "{}://{}:{}".format(config["zmq"]["protocol"], "*", config["zmq"]["port"])
-_URL_SUB = "{}://{}:{}".format(config["zmq"]["protocol"], config["zmq"]["host"], config["zmq"]["port"])
-
-_TOPIC_STT = config["zmq"]["topics"]["speech_to_text"]
-_TOPIC_NLG = config["zmq"]["topics"]["natural_language_generation"]
-
-# TODO: "char_token", or whatever
-# FIXME: Other way around
-_TOKEN = config["cai"]["token"] or os.getenv("CAI_TOKEN")
-_CHAR = config["cai"]["char"]
-
 # TODO: Rename to generate_text()?
 # TODO: from zmq import Socket idfk
 def natural_language_generation(*, publisher: zmq.Socket, subscriber: zmq.Socket, stop_event: Optional[Event] = None) -> None:
-    client = PyCAI(_TOKEN)
+    client = PyCAI(Config.CAI_TOKEN)
     # TODO: Log
 
-    chat = client.chat.get_chat(_CHAR)
+    chat = client.chat.get_chat(Config.CAI_CHAR)
     # TODO: Log
 
     # TODO: Dataclass
@@ -42,8 +23,8 @@ def natural_language_generation(*, publisher: zmq.Socket, subscriber: zmq.Socket
     tgt = participants[int(is_human)]["user"]["username"]
 
     # TODO: Redo logging
-    subscriber.subscribe(_TOPIC_STT)
-    logging.info("Subscribed to \"%s\" topic", _TOPIC_STT)
+    subscriber.subscribe(Config.ZMQ_TOPIC_STT)
+    logging.info("Subscribed to \"%s\" topic", Config.ZMQ_TOPIC_STT)
 
     poller = zmq.Poller()
     poller.register(subscriber, zmq.POLLIN)
@@ -68,7 +49,7 @@ def natural_language_generation(*, publisher: zmq.Socket, subscriber: zmq.Socket
             print(f"{name}: {text}")
 
             # TODO: Log
-            publisher.send_string(_TOPIC_NLG, zmq.SNDMORE)
+            publisher.send_string(Config.ZMQ_TOPIC_NLG, zmq.SNDMORE)
             publisher.send_string(text)
         # FIXME
         # TODO: sleep()
@@ -86,10 +67,10 @@ if __name__ == "__main__":
         context.socket(zmq.PUB) as publisher,
         context.socket(zmq.SUB) as subscriber
     ):
-        publisher.bind(_URL_PUB)
-        logging.info("Binded to socket at \"%s\"", _URL_PUB)
+        publisher.bind(Config.ZMQ_ADDRESS_BIND)
+        logging.info("Binded to socket at \"%s\"", Config.ZMQ_ADDRESS_BIND)
 
-        subscriber.connect(_URL_SUB)
-        logging.info("Connected to socket at \"%s\"", _URL_SUB)
+        subscriber.connect(Config.ZMQ_ADDRESS_CONNECT)
+        logging.info("Connected to socket at \"%s\"", Config.ZMQ_ADDRESS_CONNECT)
 
         natural_language_generation(publisher=publisher, subscriber=subscriber)

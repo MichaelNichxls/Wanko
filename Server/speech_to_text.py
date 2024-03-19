@@ -14,18 +14,7 @@ from typing import Optional
 from tempfile import NamedTemporaryFile
 from time import sleep
 
-# TODO: Do this better
-Config.load_config("config.json")
-config = Config.get_config()
-
-_URL_PUB = "{}://{}:{}".format(config["zmq"]["protocol"], "*", config["zmq"]["port"])
-
-_TOPIC_STT = config["zmq"]["topics"]["speech_to_text"]
-
-_MODEL = config["whisper"]["model"]
-_ENERGY_THRESHOLD = config["whisper"]["energy_threshold"]
-_RECORD_TIMEOUT = config["whisper"]["record_timeout"]
-_PHRASE_TIMEOUT = config["whisper"]["phrase_timeout"]
+# FIXME: audio doesn't finish processing, and user is forced to keyboard interrupt to progress
 
 # TODO: Rename
 def speech_to_text(*, publisher: zmq.Socket, stop_event: Optional[Event] = None) -> None:
@@ -49,7 +38,7 @@ def speech_to_text(*, publisher: zmq.Socket, stop_event: Optional[Event] = None)
     # We use SpeechRecognizer to record our audio because it has a nice feature where it can detect when speech ends.
     recorder = sr.Recognizer()
     # recorder.energy_threshold = args.energy_threshold
-    recorder.energy_threshold = _ENERGY_THRESHOLD
+    recorder.energy_threshold = Config.WHISPER_ENERGY_THRESHOLD
     # Definitely do this, dynamic energy compensation lowers the energy threshold dramatically to a point where the SpeechRecognizer never stops recording.
     recorder.dynamic_energy_threshold = False
 
@@ -64,8 +53,8 @@ def speech_to_text(*, publisher: zmq.Socket, stop_event: Optional[Event] = None)
 
     # TODO: Move to config; Rename
     # TODO: Benchmark and optimize
-    audio_model = WhisperModel(_MODEL, compute_type="int8_float16" if torch.cuda.is_available() else "int8")
-    logging.info("Loaded \"%s\" Whisper model", _MODEL)
+    audio_model = WhisperModel(Config.WHISPER_MODEL, compute_type="int8_float16" if torch.cuda.is_available() else "int8")
+    logging.info("Loaded \"%s\" Whisper model", Config.WHISPER_MODEL)
 
     # record_timeout = args.record_timeout
     # phrase_timeout = args.phrase_timeout
@@ -89,7 +78,7 @@ def speech_to_text(*, publisher: zmq.Socket, stop_event: Optional[Event] = None)
 
     # Create a background thread that will pass us raw audio bytes.
     # We could do this manually but SpeechRecognizer provides a nice helper.
-    recorder.listen_in_background(source, record_callback, phrase_time_limit=_RECORD_TIMEOUT)
+    recorder.listen_in_background(source, record_callback, phrase_time_limit=Config.WHISPER_RECORD_TIMEOUT)
 
     # TODO: Utilize faster-whisper's segmenting
     try:
@@ -104,7 +93,7 @@ def speech_to_text(*, publisher: zmq.Socket, stop_event: Optional[Event] = None)
 
             # If enough time has passed between recordings, consider the phrase complete.
             # Clear the current working audio buffer to start over with the new data.
-            if phrase_time and now - phrase_time > timedelta(seconds=_PHRASE_TIMEOUT):
+            if phrase_time and now - phrase_time > timedelta(seconds=Config.WHISPER_PHRASE_TIMEOUT):
                 last_sample = bytes()
                 phrase_complete = True
 
@@ -112,7 +101,7 @@ def speech_to_text(*, publisher: zmq.Socket, stop_event: Optional[Event] = None)
                 if should_send:
                     should_send = False
 
-                    publisher.send_string(_TOPIC_STT, zmq.SNDMORE)
+                    publisher.send_string(Config.ZMQ_TOPIC_STT, zmq.SNDMORE)
                     publisher.send_string(transcription[-1])
 
                     # TODO: logging.debug()?
@@ -171,7 +160,7 @@ if __name__ == "__main__":
         zmq.Context() as context,
         context.socket(zmq.PUB) as publisher
     ):
-        publisher.bind(_URL_PUB)
-        logging.info("Binded to socket at \"%s\"", _URL_PUB)
+        publisher.bind(Config.ZMQ_ADDRESS_BIND)
+        logging.info("Binded to socket at \"%s\"", Config.ZMQ_ADDRESS_BIND)
 
         speech_to_text(publisher=publisher)

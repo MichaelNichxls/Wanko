@@ -1,20 +1,13 @@
 import logging
 import zmq
 
+from config import Config
 from threading import Thread, Event
 from time import sleep
 
 # TODO: Redo or rename
-from config import Config
 from speech_to_text import speech_to_text as stt
 from natural_language_generation import natural_language_generation as nlg
-
-# TODO: Do this better
-Config.load_config("config.json")
-config = Config.get_config()
-
-_URL_PUB = "{}://{}:{}".format(config["zmq"]["protocol"], "*", config["zmq"]["port"])
-_URL_SUB = "{}://{}:{}".format(config["zmq"]["protocol"], config["zmq"]["host"], config["zmq"]["port"])
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -24,11 +17,11 @@ if __name__ == "__main__":
         context.socket(zmq.PUB) as publisher,
         context.socket(zmq.SUB) as subscriber
     ):
-        publisher.bind(_URL_PUB)
-        logging.info("Binded to socket at \"%s\"", _URL_PUB)
+        publisher.bind(Config.ZMQ_ADDRESS_BIND)
+        logging.info("Binded to socket at \"%s\"", Config.ZMQ_ADDRESS_BIND)
         
-        subscriber.connect(_URL_SUB)
-        logging.info("Connected to socket at \"%s\"", _URL_SUB)
+        subscriber.connect(Config.ZMQ_ADDRESS_CONNECT)
+        logging.info("Connected to socket at \"%s\"", Config.ZMQ_ADDRESS_CONNECT)
 
         stop_event = Event()
 
