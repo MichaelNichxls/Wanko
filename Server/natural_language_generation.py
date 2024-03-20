@@ -4,9 +4,84 @@ import zmq
 from config import Config
 # TODO: as
 from characterai import PyCAI, errors
+from dataclasses import dataclass, field
 from threading import Event
-from typing import Optional
+from typing import Optional, List
 # from time import sleep
+
+@dataclass(kw_only=True)
+class Account:
+    name: str
+    avatar_type: str
+    onboarding_complete: bool
+    avatar_file_name: str
+    mobile_onboarding_complete: int
+
+@dataclass(kw_only=True)
+class User:
+    username: str
+    id: int
+    first_name: str
+    account: Optional[Account]
+    is_staff: bool
+
+    def __post_init__(self):
+        self.account = Account(**self.account) if self.account is not None else None
+
+@dataclass(kw_only=True)
+class Participant:
+    user: Optional[User] = None
+    is_human: Optional[bool] = None
+    name: str
+    num_interactions: Optional[int] = None
+
+    def __post_init__(self):
+        self.user = User(**self.user) if self.user is not None else None
+
+# frozen
+@dataclass(kw_only=True)
+class Chat:
+    title: str
+    # union
+    # default factory needed?
+    participants: List[Participant] = field(default_factory=list)
+    external_id: str
+    created: str
+    last_interaction: str
+    type: str
+    description: str
+
+    # TODO: Type check
+    def __post_init__(self):
+        self.participants = [Participant(**participant) for participant in self.participants]
+
+@dataclass(kw_only=True)
+class Reply:
+    text: str
+    uuid: str
+    id: int
+
+# rename
+@dataclass(kw_only=True)
+class SrcChar:
+    participant: Participant
+    avatar_file_name: str
+
+    def __post_init__(self):
+        self.participant = Participant(**self.participant)
+
+# rename
+@dataclass(kw_only=True)
+class Data:
+    replies: List[Reply] = field(default_factory=list)
+    src_char: SrcChar
+    is_final_chunk: bool
+    last_user_msg_id: int
+    last_user_msg_uuid: str
+
+    def __post_init__(self):
+        self.replies = [Reply(**reply) for reply in self.replies]
+        self.src_char = SrcChar(**self.src_char)
 
 # TODO: Rename to generate_text()?
 # TODO: from zmq import Socket idfk
@@ -14,13 +89,10 @@ def natural_language_generation(*, publisher: zmq.Socket, subscriber: zmq.Socket
     client = PyCAI(Config.CAI_TOKEN)
     # TODO: Log
 
-    chat = client.chat.get_chat(Config.CAI_CHAR)
+    chat = Chat(**client.chat.get_chat(Config.CAI_CHAR))
     # TODO: Log
 
-    # TODO: Dataclass
-    participants = chat["participants"]
-    is_human = participants[0]["is_human"]
-    tgt = participants[int(is_human)]["user"]["username"]
+    tgt = [participant.user.username for participant in chat.participants if not participant.is_human][0]
 
     # TODO: Redo logging
     subscriber.subscribe(Config.ZMQ_TOPIC_STT)
@@ -41,10 +113,11 @@ def natural_language_generation(*, publisher: zmq.Socket, subscriber: zmq.Socket
 
             # TODO: Comment
             message = subscriber.recv_multipart()[1].decode("utf-8")
-            data = client.chat.send_message(chat["external_id"], tgt, message)
+            data = Data(**client.chat.send_message(chat.external_id, tgt, message))
 
-            name = data["src_char"]["participant"]["name"]
-            text = data["replies"][0]["text"]
+            # inline
+            name = data.src_char.participant.name
+            text = data.replies[0].text
 
             print(f"{name}: {text}")
 
