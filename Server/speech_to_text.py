@@ -1,166 +1,102 @@
-# import argparse
-import io
 import logging
+import numpy as np
 import speech_recognition as sr
-import torch
+# import torch
 import zmq
 
 from config import Config
-from datetime import datetime, timedelta
 from faster_whisper import WhisperModel
+from pipeline_thread import PipelineThread
 from queue import Queue
-from threading import Event
-from typing import Optional
-from tempfile import NamedTemporaryFile
 from time import sleep
+from typing import override
 
-# FIXME: audio doesn't finish processing, and user is forced to keyboard interrupt to progress
+# rename
+class STTThread(PipelineThread):
+    def __init__(self):
+        super().__init__(send_addr=Config.ZMQ_ADDR_STT)
+    
+        # TODO: do something like this
+        # self.record_timeout = Config.WHISPER_RECORD_TIMEOUT
+        # self.phrase_timeout = Config.WHISPER_PHRASE_TIMEOUT
 
-# TODO: Rename
-def speech_to_text(*, publisher: zmq.Socket, stop_event: Optional[Event] = None) -> None:
-    # parser = argparse.ArgumentParser()
-    # TODO: Update help args
-    # TODO: Update args in general
-    # parser.add_argument("--model", default="base", help="Model to use.", choices=["tiny", "base", "small", "medium", "large"])
-    # parser.add_argument("--non_english", action="store_true", help="Don't use the english model.")
-    # parser.add_argument("--energy_threshold", default=1_000, help="Energy level for mic to detect.", type=int)
-    # parser.add_argument("--record_timeout", default=2, help="How real-time the recording is in seconds.", type=float)
-    # parser.add_argument("--phrase_timeout", default=3, help="How much empty space between recordings before the phrase is considered a new line in the transcription.", type=float)
+        # TODO: make some attributes not attributes and/or private
+        
+        # Thread safe Queue for passing data from the threaded recording callback.
+        self._data_queue = Queue()
+        # We use SpeechRecognizer to record our audio because it has a nice feature where it can detect when speech ends.
+        self.recorder = sr.Recognizer()
+        self.recorder.energy_threshold = Config.SR_ENERGY_THRESHOLD
+        self.recorder.pause_threshold = Config.SR_PAUSE_THRESHOLD
+        # Definitely do this, dynamic energy compensation lowers the energy threshold dramatically to a point where the SpeechRecognizer never stops recording.
+        self.recorder.dynamic_energy_threshold = False
 
-    # args = parser.parse_args()
+        self.source = sr.Microphone(sample_rate=16_000)
 
-    # The last time a recording was retrieved from the queue.
-    phrase_time = None
-    # Current raw audio bytes.
-    last_sample = bytes()
-    # Thread safe Queue for passing data from the threaded recording callback.
-    data_queue = Queue()
-    # We use SpeechRecognizer to record our audio because it has a nice feature where it can detect when speech ends.
-    recorder = sr.Recognizer()
-    # recorder.energy_threshold = args.energy_threshold
-    recorder.energy_threshold = Config.WHISPER_ENERGY_THRESHOLD
-    # Definitely do this, dynamic energy compensation lowers the energy threshold dramatically to a point where the SpeechRecognizer never stops recording.
-    recorder.dynamic_energy_threshold = False
+        with self.source:
+            self.recorder.adjust_for_ambient_noise(self.source)
 
-    # HACK
-    should_send = False
+        def record_callback(_, audio: sr.AudioData) -> None:
+            """
+            Threaded callback function to receive audio data when recordings finish.
+            audio: An AudioData containing the recorded bytes.
+            """
+            # Grab the raw bytes and push it into the thread safe queue.
+            data: bytes = audio.get_raw_data()
+            self._data_queue.put(data)
 
-    # Load / Download model
-    # model = args.model
+        # Create a background thread that will pass us raw audio bytes.
+        # We could do this manually but SpeechRecognizer provides a nice helper.
+        self.recorder.listen_in_background(self.source, record_callback) # self.record_timeout
 
-    # if args.model != "large" and not args.non_english:
-    #     model += ".en"
+        # configurable
+        self.audio_model = WhisperModel(Config.WHISPER_MODEL, device=Config.WHISPER_DEVICE, compute_type=Config.WHISPER_COMPUTE_TYPE)
 
-    # TODO: Move to config; Rename
-    # TODO: Benchmark and optimize
-    audio_model = WhisperModel(Config.WHISPER_MODEL, compute_type="int8_float16" if torch.cuda.is_available() else "int8")
-    logging.info("Loaded \"%s\" Whisper model", Config.WHISPER_MODEL)
+        # TODO: log
+        print("Model loaded.")
+    
+    # use events
+    @override
+    def run(self) -> None:
+        super().run()
 
-    # record_timeout = args.record_timeout
-    # phrase_timeout = args.phrase_timeout
-
-    temp_file = NamedTemporaryFile().name
-    transcription = [""]
-
-    source = sr.Microphone(sample_rate=16000)
-
-    with source:
-        recorder.adjust_for_ambient_noise(source)
-
-    def record_callback(_, audio: sr.AudioData) -> None:
-        """
-        Threaded callback function to receive audio data when recordings finish.
-        audio: An AudioData containing the recorded bytes.
-        """
-        # Grab the raw bytes and push it into the thread safe queue.
-        data = audio.get_raw_data()
-        data_queue.put(data)
-
-    # Create a background thread that will pass us raw audio bytes.
-    # We could do this manually but SpeechRecognizer provides a nice helper.
-    recorder.listen_in_background(source, record_callback, phrase_time_limit=Config.WHISPER_RECORD_TIMEOUT)
-
-    # TODO: Utilize faster-whisper's segmenting
-    try:
-        # TODO: Subclass
-        while stop_event is None or not stop_event.is_set():
-            # Infinite loops are bad for processors, must sleep.
-            sleep(0.2)
-
-            # TODO: Move
-            now = datetime.utcnow()
-            phrase_complete = False
-
-            # If enough time has passed between recordings, consider the phrase complete.
-            # Clear the current working audio buffer to start over with the new data.
-            if phrase_time and now - phrase_time > timedelta(seconds=Config.WHISPER_PHRASE_TIMEOUT):
-                last_sample = bytes()
-                phrase_complete = True
-
-                # HACK
-                if should_send:
-                    should_send = False
-
-                    publisher.send_string(Config.ZMQ_TOPIC_STT, zmq.SNDMORE)
-                    publisher.send_string(transcription[-1])
-
-                    # TODO: logging.debug()?
-                    logging.info("Phrase sent via socket")
-            
+        while not self.stop_event.is_set():
             # Pull raw recorded audio from the queue.
-            if data_queue.empty():
+            if self._data_queue.empty():
+                # Infinite loops are bad for processors, must sleep.
+                sleep(0.25)
                 continue
+            
+            # Combine audio data from queue
+            audio_data = b"".join(self._data_queue.queue)
+            self._data_queue.queue.clear()
 
-            # HACK
-            should_send = True
-
-            # This is the last time we received new audio data from the queue.
-            phrase_time = now
-
-            # Concatenate our current audio data with the latest audio data.
-            while not data_queue.empty():
-                data = data_queue.get()
-                last_sample += data
-
-            # Use AudioData to convert the raw data to wav data.
-            audio_data = sr.AudioData(last_sample, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-            wav_data = io.BytesIO(audio_data.get_wav_data())
-
-            # Write wav data to the temporary file as bytes.
-            with open(temp_file, "w+b") as f:
-                f.write(wav_data.read())
+            # Convert in-ram buffer to something the model can use directly without needing a temp file.
+            # Convert data from 16 bit wide integers to floating point with a width of 32 bits.
+            # Clamp the audio stream frequency to a PCM wavelength compatible default of 32768hz max.
+            audio_np = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32_768.0
 
             # Read the transcription.
-            segments, _ = audio_model.transcribe(temp_file, beam_size=5)
-            # NOTE: LIST COMPREHENSIONS FOR THE WIN HAHAHA
-            # TODO: Do this where applicable
-            text = " ".join(segment.text.strip() for segment in segments)
+            segments, _ = self.audio_model.transcribe(audio_np)
+            text = " ".join([segment.text.strip() for segment in segments])
 
-            # If we detected a pause between recordings, add a new item to our transcription.
-            # Otherwise edit the existing one.
-            if phrase_complete:
-                transcription.append(text)
-            else:
-                transcription[-1] = text
-            
-            # TODO: Format in terminal
+            # TODO: logging.debug()
             print(text)
 
-            # TODO: Log transcription with debug level in finally block 
-    except KeyboardInterrupt:
-        # TODO: Add everywhere or move
-        logging.info("Program interrupted by user")
-    finally:
-        logging.debug("Transcription:\n%s", "\n".join(transcription))
+            # TODO: log
+            # FIXME: do this in a non-blocking manner
+            try:
+                self.push_socket.send_string(text, zmq.DONTWAIT)
+            except zmq.Again:
+                pass
+
+# TODO: Log transcription with debug level in finally block 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    with (
-        zmq.Context() as context,
-        context.socket(zmq.PUB) as publisher
-    ):
-        publisher.bind(Config.ZMQ_ADDRESS_BIND)
-        logging.info("Binded to socket at \"%s\"", Config.ZMQ_ADDRESS_BIND)
-
-        speech_to_text(publisher=publisher)
+    with STTThread() as stt_thread:
+        try:
+            stt_thread.run()
+        except KeyboardInterrupt:
+            stt_thread.stop_event.set()

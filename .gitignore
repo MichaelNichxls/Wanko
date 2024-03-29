@@ -196,6 +196,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.mina
 .venv
 env/
 venv/
