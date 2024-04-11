@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Wanko
 {
     [RequireComponent(typeof(TMP_Text))]
-    public class TypewriterEffect : MonoBehaviour
+    public sealed class TypewriterEffect : MonoBehaviour
     {
         [SerializeField]
         private TMP_Text _text;
