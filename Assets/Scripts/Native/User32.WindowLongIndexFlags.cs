@@ -5,7 +5,7 @@ namespace Wanko.Native
     partial class User32
     {
         [Flags]
-        internal enum WindowLongIndexFlags : int
+        public enum WindowLongIndexFlags : int
         {
             GWL_EXSTYLE     = -20,
             GWLP_HINSTANCE  = -6,

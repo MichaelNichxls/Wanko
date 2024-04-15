@@ -7,6 +7,6 @@ namespace Wanko.Native
     internal static partial class DwmApi
     {
         [DllImport(nameof(DwmApi))]
-        internal static extern uint DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS margins);
+        public static extern uint DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS margins);
     }
 }

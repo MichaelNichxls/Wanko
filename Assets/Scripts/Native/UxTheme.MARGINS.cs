@@ -5,12 +5,12 @@ namespace Wanko.Native
     partial class UxTheme
     {
         [StructLayout(LayoutKind.Sequential)]
-        internal struct MARGINS
+        public struct MARGINS
         {
-            internal int cxLeftWidth;
-            internal int cxRightWidth;
-            internal int cyTopHeight;
-            internal int cyBottomHeight;
+            public int cxLeftWidth;
+            public int cxRightWidth;
+            public int cyTopHeight;
+            public int cyBottomHeight;
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Wanko.Native
     partial class User32
     {
         [Flags]
-        internal enum SetWindowLongFlags : uint
+        public enum SetWindowLongFlags : uint
         {
             WS_OVERLAPPED   = 0,
             WS_POPUP        = 0x80000000,

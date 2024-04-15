@@ -5,7 +5,7 @@ namespace Wanko.Native
     partial class User32
     {
         [Flags]
-        internal enum SetWindowPosFlags : uint
+        public enum SetWindowPosFlags : uint
         {
             SWP_ASYNCWINDOWPOS  = 0x4000,
             SWP_DEFERERASE      = 0x2000,
