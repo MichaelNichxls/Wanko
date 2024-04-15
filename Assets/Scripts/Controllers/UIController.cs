@@ -12,12 +12,7 @@ using static Wanko.Native.User32.WindowLongIndexFlags;
 namespace Wanko.Controllers
 {
     [DisallowMultipleComponent]
-    public sealed class UIController
-        : MonoBehaviour
-        , IPointerEnterHandler, IPointerExitHandler
-        , IPointerDownHandler, IPointerUpHandler
-        , IDragHandler
-        , IScrollHandler
+    public sealed class UIController : Selectable, IDragHandler, IScrollHandler
     {
         private RectTransform _rectTransform;
         // Rename
@@ -26,20 +21,10 @@ namespace Wanko.Controllers
 #if !UNITY_EDITOR
         private User32.SetWindowLongFlags _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
 #endif
-        [field: Header("Graphic")]
-        [field: SerializeField]
-        public Graphic TargetGraphic { get; private set; }
-        [field: SerializeField]
-        public Color NormalColor { get; private set; } = new(1f, 1f, 1f, 1f);
-        [field: SerializeField]
-        public Color HighlightedColor { get; private set; } = new(245f / byte.MaxValue, 245f / byte.MaxValue, 245f / byte.MaxValue, 1f);
-        [field: SerializeField]
-        public Color PressedColor { get; private set; } = new(200f / byte.MaxValue, 200f / byte.MaxValue, 200f / byte.MaxValue, 1f);
-        [field: SerializeField]
-        public float FadeDuration { get; private set; } = 0.1f;
         [field: Header("Drag")]
         [field: SerializeField]
         public float DragSpeed { get; private set; } = 10f;
+
         [field: Header("Scale")]
         [field: SerializeField]
         public float ScaleMin { get; private set; } = .5f;
@@ -50,37 +35,9 @@ namespace Wanko.Controllers
         [field: SerializeField]
         public float ScaleSpeed { get; private set; } = 10f;
 
-        void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
-        {
-#if !UNITY_EDITOR
-            _dwNewLong = WS_EX_LAYERED;
-#endif
-            TargetGraphic.CrossFadeColor(HighlightedColor, FadeDuration, true, true);
-        }
-
-        void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
-        {
-#if !UNITY_EDITOR
-            _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
-#endif
-            TargetGraphic.CrossFadeColor(NormalColor, FadeDuration, true, true);
-        }
-
-        // FIXME: "breaks" if you drag too fast
-        void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
-        {
-            if (eventData.button is PointerEventData.InputButton.Left or PointerEventData.InputButton.Right)
-                return;
-
-            TargetGraphic.CrossFadeColor(PressedColor, FadeDuration, true, true);
-        }
-
-        void IPointerUpHandler.OnPointerUp(PointerEventData eventData) =>
-            TargetGraphic.CrossFadeColor(HighlightedColor, FadeDuration, true, true);
-
         void IDragHandler.OnDrag(PointerEventData eventData)
         {
-            if (eventData.button is PointerEventData.InputButton.Left or PointerEventData.InputButton.Right)
+            if (eventData.button != PointerEventData.InputButton.Left)
                 return;
 
             _position += eventData.delta;
@@ -93,18 +50,35 @@ namespace Wanko.Controllers
             _scale = Vector3.Max(_scale, ScaleMin * Vector3.one);
         }
 
-        private void Reset() =>
-            TargetGraphic = GetComponent<Graphic>();
-
-        private void Awake() =>
-            _rectTransform = transform as RectTransform;
-
-        private void Start()
+        public override void OnPointerEnter(PointerEventData eventData)
         {
+            base.OnPointerEnter(eventData);
+#if !UNITY_EDITOR
+            _dwNewLong = WS_EX_LAYERED;
+#endif
+        }
+
+        // FIXME: Graphics aren't exactly synced with dragging, as dragging is lerped
+        public override void OnPointerExit(PointerEventData eventData)
+        {
+            base.OnPointerExit(eventData);
+            DoStateTransition(SelectionState.Normal, false);
+#if !UNITY_EDITOR
+            _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
+#endif
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            _rectTransform = transform as RectTransform;
+        }
+
+        protected override void Start()
+        {
+            base.Start();
             _offset = _rectTransform.anchoredPosition;
             _scale = _rectTransform.localScale;
-
-            TargetGraphic.CrossFadeColor(NormalColor, 0f, true, true);
         }
 
         private void Update()

@@ -92,7 +92,7 @@ public partial class @CubismModelInputActions: IInputActionCollection2, IDisposa
                 {
                     ""name"": """",
                     ""id"": ""4058fe51-7483-4a7a-a6b6-6cc543e81ecc"",
-                    ""path"": ""<Mouse>/middleButton"",
+                    ""path"": ""<Mouse>/leftButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",

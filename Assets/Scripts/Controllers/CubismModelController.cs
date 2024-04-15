@@ -29,6 +29,7 @@ namespace Wanko.Controllers
         [field: Header("Drag")]
         [field: SerializeField]
         public float DragSpeed { get; private set; } = 10f;
+
         [field: Header("Scale")]
         [field: SerializeField]
         public float ScaleMin { get; private set; } = 1f;
