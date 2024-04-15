@@ -1,12 +1,13 @@
+//#undef UNITY_EDITOR
 using Live2D.Cubism.Framework.Raycasting;
 using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
 #if !UNITY_EDITOR
 using Wanko.Native;
-using static Wanko.Native.NativeConstants;
+using static Wanko.Native.User32.SetWindowLongFlags;
+using static Wanko.Native.User32.WindowLongIndexFlags;
 #endif
 
 // Utilize CubismModelInputActions.CubismModelActions more
@@ -23,7 +24,7 @@ namespace Wanko.Controllers
         private Vector3 _position, _offset;
         private Vector3 _scale;
 #if !UNITY_EDITOR
-        private uint _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
+        private User32.SetWindowLongFlags _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
 #endif
         [field: Header("Drag")]
         [field: SerializeField]
@@ -115,13 +116,13 @@ namespace Wanko.Controllers
             _scale = Vector3.Max(_scale, ScaleMin * Vector3.one);
         }
 
-        public void SetWindowLong(IntPtr hWnd)
+        public unsafe void SetWindowLong(IntPtr hWnd)
         {
 #if !UNITY_EDITOR
             if ((_dwNewLong & WS_EX_TRANSPARENT) != 0)
                 return;
 
-            NativeMethods.SetWindowLong(hWnd, GWL_EXSTYLE, _dwNewLong);
+            User32.SetWindowLongPtr(hWnd, GWL_EXSTYLE, (void*)(int)_dwNewLong);
 #endif
         }
     }
