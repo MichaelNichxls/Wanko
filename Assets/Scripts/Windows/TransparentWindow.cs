@@ -10,7 +10,7 @@ using static Wanko.Native.User32.WindowLongIndexFlags;
 using static Wanko.Native.UxTheme;
 #endif
 
-namespace Wanko
+namespace Wanko.Windows
 {
     [DisallowMultipleComponent]
     internal sealed class TransparentWindow : MonoBehaviour
