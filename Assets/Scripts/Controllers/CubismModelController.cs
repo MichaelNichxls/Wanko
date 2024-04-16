@@ -1,4 +1,3 @@
-//#undef UNITY_EDITOR
 using Live2D.Cubism.Framework.Raycasting;
 using System;
 using System.Linq;
@@ -26,11 +25,8 @@ namespace Wanko.Controllers
 #if !UNITY_EDITOR
         private User32.SetWindowLongFlags _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
 #endif
-        [field: Header("Drag")]
         [field: SerializeField]
         public float DragSpeed { get; private set; } = 10f;
-
-        [field: Header("Scale")]
         [field: SerializeField]
         public float ScaleMin { get; private set; } = 1f;
         [field: SerializeField]
@@ -91,6 +87,7 @@ namespace Wanko.Controllers
             _offset = transform.position - _position;
         }
 
+        // TODO: do better
         // Rename action
         private void DragPosition_Performed(InputAction.CallbackContext context)
         {

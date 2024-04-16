@@ -1,8 +1,6 @@
-//#undef UNITY_EDITOR
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 #if !UNITY_EDITOR
 using Wanko.Native;
 using static Wanko.Native.User32.SetWindowLongFlags;
@@ -12,7 +10,10 @@ using static Wanko.Native.User32.WindowLongIndexFlags;
 namespace Wanko.Controllers
 {
     [DisallowMultipleComponent]
-    public sealed class UIController : Selectable, IDragHandler, IScrollHandler
+    public sealed class UIController : MonoBehaviour, IDragHandler, IScrollHandler
+#if !UNITY_EDITOR
+        , IPointerEnterHandler, IPointerExitHandler
+#endif
     {
         private RectTransform _rectTransform;
         // Rename
@@ -21,17 +22,14 @@ namespace Wanko.Controllers
 #if !UNITY_EDITOR
         private User32.SetWindowLongFlags _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
 #endif
-        [field: Header("Drag")]
         [field: SerializeField]
         public float DragSpeed { get; private set; } = 10f;
-
-        [field: Header("Scale")]
         [field: SerializeField]
         public float ScaleMin { get; private set; } = .5f;
         [field: SerializeField]
         public float ScaleMax { get; private set; } = 4f;
         [field: SerializeField]
-        public float ScaleFactor { get; private set; } = .025f;
+        public float ScaleFactor { get; private set; } = .1f;
         [field: SerializeField]
         public float ScaleSpeed { get; private set; } = 10f;
 
@@ -45,38 +43,22 @@ namespace Wanko.Controllers
 
         void IScrollHandler.OnScroll(PointerEventData eventData)
         {
-            _scale += eventData.scrollDelta.y * ScaleFactor * Vector3.one;
+            _scale += eventData.scrollDelta.y / 6f * ScaleFactor * Vector3.one;
             _scale = Vector3.Min(_scale, ScaleMax * Vector3.one);
             _scale = Vector3.Max(_scale, ScaleMin * Vector3.one);
         }
-
-        public override void OnPointerEnter(PointerEventData eventData)
-        {
-            base.OnPointerEnter(eventData);
 #if !UNITY_EDITOR
+        void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData) =>
             _dwNewLong = WS_EX_LAYERED;
-#endif
-        }
-
-        // FIXME: Graphics aren't exactly synced with dragging, as dragging is lerped
-        public override void OnPointerExit(PointerEventData eventData)
-        {
-            base.OnPointerExit(eventData);
-            DoStateTransition(SelectionState.Normal, false);
-#if !UNITY_EDITOR
+            
+        void IPointerExitHandler.OnPointerExit(PointerEventData eventData) =>
             _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
 #endif
-        }
-
-        protected override void Awake()
-        {
-            base.Awake();
+        private void Awake() =>
             _rectTransform = transform as RectTransform;
-        }
 
-        protected override void Start()
+        private void Start()
         {
-            base.Start();
             _offset = _rectTransform.anchoredPosition;
             _scale = _rectTransform.localScale;
         }
