@@ -6,16 +6,7 @@
             "id": "6427a888-eb20-4c47-9e2a-b503754b5677",
             "actions": [
                 {
-                    "name": "Drag",
-                    "type": "Button",
-                    "id": "5d4c10b0-4b9e-4224-9123-3d8d35da8f15",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                },
-                {
-                    "name": "DragPosition",
+                    "name": "Position",
                     "type": "PassThrough",
                     "id": "9a070827-ab7e-47b0-88c7-a0c483be9db8",
                     "expectedControlType": "Vector2",
@@ -24,7 +15,16 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Scale",
+                    "name": "Click",
+                    "type": "Button",
+                    "id": "5d4c10b0-4b9e-4224-9123-3d8d35da8f15",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Scroll",
                     "type": "PassThrough",
                     "id": "fb82324c-45e7-46c1-95eb-d8e40a66945a",
                     "expectedControlType": "Axis",
@@ -36,45 +36,12 @@
             "bindings": [
                 {
                     "name": "",
-                    "id": "8df7ef25-7b2c-49c8-9f91-b0c43d4e4432",
-                    "path": "<Mouse>/position",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "DragPosition",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "7bd39966-9c76-4363-8b54-3d0fa0f0e918",
-                    "path": "<Pen>/position",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "DragPosition",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "ed262263-3b39-4816-a21b-0bf0b8367e79",
-                    "path": "<Touchscreen>/touch*/position",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "DragPosition",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "4058fe51-7483-4a7a-a6b6-6cc543e81ecc",
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Drag",
+                    "action": "Click",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -85,7 +52,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Drag",
+                    "action": "Click",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -96,7 +63,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Drag",
+                    "action": "Click",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -107,7 +74,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Drag",
+                    "action": "Click",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -118,7 +85,40 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Scale",
+                    "action": "Scroll",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8df7ef25-7b2c-49c8-9f91-b0c43d4e4432",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Position",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7bd39966-9c76-4363-8b54-3d0fa0f0e918",
+                    "path": "<Pen>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Position",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ed262263-3b39-4816-a21b-0bf0b8367e79",
+                    "path": "<Touchscreen>/touch*/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Position",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

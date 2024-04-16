@@ -16,9 +16,7 @@ namespace Wanko.Controllers
 #endif
     {
         private RectTransform _rectTransform;
-        // Rename
-        private Vector2 _position, _offset;
-        private Vector3 _scale;
+        private Vector3 _position, _offset, _scale;
 #if !UNITY_EDITOR
         private User32.SetWindowLongFlags _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
 #endif
@@ -38,7 +36,7 @@ namespace Wanko.Controllers
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
 
-            _position += eventData.delta;
+            _position += (Vector3)eventData.delta;
         }
 
         void IScrollHandler.OnScroll(PointerEventData eventData)
@@ -59,13 +57,13 @@ namespace Wanko.Controllers
 
         private void Start()
         {
-            _offset = _rectTransform.anchoredPosition;
+            _position = _rectTransform.position;
             _scale = _rectTransform.localScale;
         }
 
         private void Update()
         {
-            _rectTransform.anchoredPosition = Vector2.Lerp(_rectTransform.anchoredPosition, _position + _offset, Time.deltaTime * DragSpeed);
+            _rectTransform.position = Vector3.Lerp(_rectTransform.position, _position + _offset, Time.deltaTime * DragSpeed);
             _rectTransform.localScale = Vector3.Lerp(_rectTransform.localScale, _scale, Time.deltaTime * ScaleSpeed);
         }
 

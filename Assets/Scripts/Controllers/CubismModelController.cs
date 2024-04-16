@@ -1,27 +1,26 @@
 using Live2D.Cubism.Framework.Raycasting;
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Wanko.InputActions;
 #if !UNITY_EDITOR
 using Wanko.Native;
 using static Wanko.Native.User32.SetWindowLongFlags;
 using static Wanko.Native.User32.WindowLongIndexFlags;
 #endif
 
-// Utilize CubismModelInputActions.CubismModelActions more
 namespace Wanko.Controllers
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CubismRaycaster))]
-    public sealed class CubismModelController : MonoBehaviour //, CubismModelInputActions.ICubismModelActions
+    public sealed class CubismModelController : MonoBehaviour, CubismModelInputActions.ICubismModelActions
     {
         private CubismRaycaster _raycaster;
         private CubismRaycastHit[] _raycastHits;
         private CubismModelInputActions _inputActions;
-        // Rename
-        private Vector3 _position, _offset;
-        private Vector3 _scale;
+        private Vector3 _position, _offset, _scale;
 #if !UNITY_EDITOR
         private User32.SetWindowLongFlags _dwNewLong = WS_EX_LAYERED | WS_EX_TRANSPARENT;
 #endif
@@ -36,6 +35,50 @@ namespace Wanko.Controllers
         [field: SerializeField]
         public float ScaleSpeed { get; private set; } = 10f;
 
+        void CubismModelInputActions.ICubismModelActions.OnPosition(InputAction.CallbackContext context)
+        {
+            if (context.phase != InputActionPhase.Performed)
+                return;
+
+            Array.Clear(_raycastHits, 0, _raycastHits.Length);
+            _raycaster.Raycast(Camera.main.ScreenPointToRay(context.ReadValue<Vector2>()), _raycastHits);
+#if !UNITY_EDITOR
+            _dwNewLong = _raycastHits.Any(x => !x.Equals(default(CubismRaycastHit)))
+                ? WS_EX_LAYERED
+                : WS_EX_LAYERED | WS_EX_TRANSPARENT;
+#endif
+        }
+
+        void CubismModelInputActions.ICubismModelActions.OnClick(InputAction.CallbackContext context)
+        {
+            if (context.phase != InputActionPhase.Performed || !_raycastHits.Any(x => !x.Equals(default(CubismRaycastHit))))
+                return;
+
+            _position = Camera.main.ScreenToWorldPoint(_inputActions.CubismModel.Position.ReadValue<Vector2>());
+            _offset = transform.position - _position;
+
+            StartCoroutine(DragCoroutine(context));
+        }
+
+        void CubismModelInputActions.ICubismModelActions.OnScroll(InputAction.CallbackContext context)
+        {
+            if (context.phase != InputActionPhase.Performed || !_raycastHits.Any(x => !x.Equals(default(CubismRaycastHit))))
+                return;
+
+            _scale += context.ReadValue<float>() / 120f * ScaleFactor * Vector3.one;
+            _scale = Vector3.Min(_scale, ScaleMax * Vector3.one);
+            _scale = Vector3.Max(_scale, ScaleMin * Vector3.one);
+        }
+
+        private IEnumerator DragCoroutine(InputAction.CallbackContext context)
+        {
+            while (context.ReadValueAsButton())
+            {
+                _position = Camera.main.ScreenToWorldPoint(_inputActions.CubismModel.Position.ReadValue<Vector2>());
+                yield return null;
+            }
+        }
+
         private void Awake()
         {
             _raycaster = GetComponent<CubismRaycaster>();
@@ -46,26 +89,18 @@ namespace Wanko.Controllers
         private void OnEnable()
         {
             _inputActions.Enable();
-
-            _inputActions.CubismModel.Drag.performed += Drag_Started;
-            _inputActions.CubismModel.Drag.performed += Drag_Performed;
-            _inputActions.CubismModel.DragPosition.performed += DragPosition_Performed;
-            _inputActions.CubismModel.Scale.performed += Scale_Performed;
+            _inputActions.CubismModel.AddCallbacks(this);
         }
 
         private void OnDisable()    
         {
             _inputActions.Disable();
-
-            _inputActions.CubismModel.Drag.performed -= Drag_Started;
-            _inputActions.CubismModel.Drag.performed -= Drag_Performed;
-            _inputActions.CubismModel.DragPosition.performed -= DragPosition_Performed;
-            _inputActions.CubismModel.Scale.performed -= Scale_Performed;
+            _inputActions.CubismModel.RemoveCallbacks(this);
         }
 
         private void Start()
         {
-            _offset = transform.position;
+            _position = transform.position;
             _scale = transform.localScale;
         }
 
@@ -73,45 +108,6 @@ namespace Wanko.Controllers
         {
             transform.position = Vector3.Lerp(transform.position, _position + _offset, Time.deltaTime * DragSpeed);
             transform.localScale = Vector3.Lerp(transform.localScale, _scale, Time.deltaTime * ScaleSpeed);
-        }
-
-        private void Drag_Started(InputAction.CallbackContext context)
-        {
-            if (!_raycastHits.Any(x => !x.Equals(default(CubismRaycastHit))))
-                context.action.Reset();
-        }
-
-        private void Drag_Performed(InputAction.CallbackContext context)
-        {
-            _position = Camera.main.ScreenToWorldPoint(_inputActions.CubismModel.DragPosition.ReadValue<Vector2>());
-            _offset = transform.position - _position;
-        }
-
-        // TODO: do better
-        // Rename action
-        private void DragPosition_Performed(InputAction.CallbackContext context)
-        {
-            Array.Clear(_raycastHits, 0, _raycastHits.Length);
-            _raycaster.Raycast(Camera.main.ScreenPointToRay(context.ReadValue<Vector2>()), _raycastHits);
-#if !UNITY_EDITOR
-            _dwNewLong = _raycastHits.Any(x => !x.Equals(default(CubismRaycastHit)))
-                ? WS_EX_LAYERED
-                : WS_EX_LAYERED | WS_EX_TRANSPARENT;
-#endif
-            if (_inputActions.CubismModel.Drag.ReadValue<float>() != 1f)
-                return;
-            
-            _position = Camera.main.ScreenToWorldPoint(context.ReadValue<Vector2>());
-        }
-
-        private void Scale_Performed(InputAction.CallbackContext context)
-        {
-            if (!_raycastHits.Any(x => !x.Equals(default(CubismRaycastHit))))
-                return;
-
-            _scale += context.ReadValue<float>() / 120f * ScaleFactor * Vector3.one;
-            _scale = Vector3.Min(_scale, ScaleMax * Vector3.one);
-            _scale = Vector3.Max(_scale, ScaleMin * Vector3.one);
         }
 
         public unsafe void SetWindowLong(IntPtr hWnd)
