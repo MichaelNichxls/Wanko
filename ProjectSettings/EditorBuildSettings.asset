@@ -8,4 +8,5 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Wanko.unity
     guid: 8803281abae47c44b9a10929ef20d4ab
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: 347b2ccc5dd798c449c7318762d8cff6, type: 2}

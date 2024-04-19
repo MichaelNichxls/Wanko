@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 26eeb1984856d204abf59ecbc3e97a2a
+guid: a643decbc2783be4aaa8be9b84fa04d9
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -11,4 +11,4 @@ ScriptedImporter:
   generateWrapperCode: 1
   wrapperCodePath: 
   wrapperClassName: 
-  wrapperCodeNamespace: Wanko.Runtime.InputActions
+  wrapperCodeNamespace: Wanko.Runtime

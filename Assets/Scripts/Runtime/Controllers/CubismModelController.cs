@@ -2,20 +2,19 @@ using Live2D.Cubism.Framework.Raycasting;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Wanko.Runtime.InputActions;
 using Wanko.Runtime.Managers;
 
 namespace Wanko.Runtime.Controllers
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CubismRaycaster))]
-    public sealed class CubismModelController : MonoBehaviour, CubismModelInputActions.ICubismModelActions, IWindowClickthroughHandler
+    public sealed class CubismModelController : MonoBehaviour, ApplicationInputActions.ICubismModelActions, IWindowClickthroughHandler
     {
         private CubismRaycaster _raycaster;
-        private CubismModelInputActions _inputActions;
+        private ApplicationInputActions.CubismModelActions _cubismModelActions;
         private Vector3 _position, _offset, _scale;
 
-        public CubismRaycastHit[] RaycastHit { get; private set; } = new CubismRaycastHit[1];
+        public CubismRaycastHit[] RaycastHit { get; private set; } = new CubismRaycastHit[1]; // move definition
         public bool HasRaycastHit { get; private set; }
 
         // indent? // IDraggable & IScalable
@@ -30,7 +29,7 @@ namespace Wanko.Runtime.Controllers
         [field: SerializeField]
         public float ScaleSpeed { get; private set; } = 10f;
 
-        void CubismModelInputActions.ICubismModelActions.OnPosition(InputAction.CallbackContext context)
+        void ApplicationInputActions.ICubismModelActions.OnPosition(InputAction.CallbackContext context)
         {
             if (!context.performed)
                 return;
@@ -38,18 +37,18 @@ namespace Wanko.Runtime.Controllers
             HasRaycastHit = _raycaster.Raycast(Camera.main.ScreenPointToRay(context.ReadValue<Vector2>()), RaycastHit) > 0;
         }
 
-        void CubismModelInputActions.ICubismModelActions.OnClick(InputAction.CallbackContext context)
+        void ApplicationInputActions.ICubismModelActions.OnClick(InputAction.CallbackContext context)
         {
             if (!context.performed || !HasRaycastHit)
                 return;
 
-            _position = Camera.main.ScreenToWorldPoint(_inputActions.CubismModel.Position.ReadValue<Vector2>());
+            _position = Camera.main.ScreenToWorldPoint(_cubismModelActions.Position.ReadValue<Vector2>());
             _offset = transform.position - _position;
 
             StartCoroutine(OnDrag(context));
         }
 
-        void CubismModelInputActions.ICubismModelActions.OnScroll(InputAction.CallbackContext context)
+        void ApplicationInputActions.ICubismModelActions.OnScroll(InputAction.CallbackContext context)
         {
             if (!context.performed || !HasRaycastHit)
                 return;
@@ -66,7 +65,7 @@ namespace Wanko.Runtime.Controllers
         {
             while (context.ReadValueAsButton())
             {
-                _position = Camera.main.ScreenToWorldPoint(_inputActions.CubismModel.Position.ReadValue<Vector2>());
+                _position = Camera.main.ScreenToWorldPoint(_cubismModelActions.Position.ReadValue<Vector2>());
                 yield return null;
             }
         }
@@ -74,19 +73,19 @@ namespace Wanko.Runtime.Controllers
         private void Awake()
         {
             _raycaster = GetComponent<CubismRaycaster>();
-            _inputActions = new CubismModelInputActions();
+            _cubismModelActions = new ApplicationInputActions().CubismModel;
         }
 
         private void OnEnable()
         {
-            _inputActions.Enable();
-            _inputActions.CubismModel.AddCallbacks(this);
+            _cubismModelActions.Enable();
+            _cubismModelActions.AddCallbacks(this);
         }
 
         private void OnDisable()    
         {
-            _inputActions.Disable();
-            _inputActions.CubismModel.RemoveCallbacks(this);
+            _cubismModelActions.Disable();
+            _cubismModelActions.RemoveCallbacks(this);
         }
 
         private void Start()

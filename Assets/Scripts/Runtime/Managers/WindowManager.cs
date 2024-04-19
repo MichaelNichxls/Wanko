@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Wanko.Runtime.InputActions;
 #if !UNITY_EDITOR
 using Wanko.Runtime.Native;
 using static Wanko.Runtime.Native.User32.SetWindowLongFlags;
@@ -13,12 +12,11 @@ using static Wanko.Runtime.Native.User32.WindowLongIndexFlags;
 namespace Wanko.Runtime.Managers
 {
     [DisallowMultipleComponent]
-    public sealed class WindowManager : MonoBehaviour, WindowInputActions.IWindowActions
+    public sealed class WindowManager : MonoBehaviour, ApplicationInputActions.IWindowActions
     {
-        // can we not make a new inputaction every time i want to subscribe to the pointer position
-        private WindowInputActions _inputActions;
+        private ApplicationInputActions.WindowActions _windowActions;
 #pragma warning disable IDE0052
-        private IEnumerable<IWindowClickthroughHandler> _clickthroughHandlers;
+        private IEnumerable<IWindowClickthroughHandler> _windowClickthroughHandlers;
 #pragma warning restore IDE0052
 
         public static WindowManager Instance { get; private set; }
@@ -29,13 +27,13 @@ namespace Wanko.Runtime.Managers
         // also throw #error in native methods class maybe
         public IntPtr HWnd => throw new NotSupportedException("Cannot retrieve window handle while in Unity Editor");
 #endif
-        void WindowInputActions.IWindowActions.OnPosition(InputAction.CallbackContext context)
+        void ApplicationInputActions.IWindowActions.OnPosition(InputAction.CallbackContext context)
         {
 #if !UNITY_EDITOR
             if (context.phase != InputActionPhase.Performed)
                 return;
             
-            SetClickthrough(!_clickthroughHandlers.Any(handler => !handler.SetClickthrough(context.ReadValue<Vector2>())));
+            SetClickthrough(!_windowClickthroughHandlers.Any(handler => !handler.SetClickthrough(context.ReadValue<Vector2>())));
 #endif
         }
 
@@ -47,8 +45,8 @@ namespace Wanko.Runtime.Managers
                 return;
             }
 
-            _inputActions = new WindowInputActions();
-            _clickthroughHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IWindowClickthroughHandler>();
+            _windowActions = new ApplicationInputActions().Window;
+            _windowClickthroughHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IWindowClickthroughHandler>();
             
             Instance = this;
 #if !UNITY_EDITOR
@@ -58,14 +56,14 @@ namespace Wanko.Runtime.Managers
 
         private void OnEnable()
         {
-            _inputActions.Enable();
-            _inputActions.Window.AddCallbacks(this);
+            _windowActions.Enable();
+            _windowActions.AddCallbacks(this);
         }
 
         private void OnDisable()
         {
-            _inputActions.Disable();
-            _inputActions.Window.RemoveCallbacks(this);
+            _windowActions.Disable();
+            _windowActions.RemoveCallbacks(this);
         }
 #if !UNITY_EDITOR
         // make conversion helper
