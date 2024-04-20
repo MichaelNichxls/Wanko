@@ -20,12 +20,13 @@ namespace Wanko.Runtime.Managers
 #pragma warning restore IDE0052
 
         public static WindowManager Instance { get; private set; }
+#pragma warning disable IDE1006
+        public IntPtr hWnd
+#pragma warning restore IDE1006
 #if !UNITY_EDITOR
-        public IntPtr HWnd { get; private set; }
+            { get; private set; }
 #else
-        // do this everywhere
-        // also throw #error in native methods class maybe
-        public IntPtr HWnd => throw new NotSupportedException("Cannot retrieve window handle while in Unity Editor");
+            => throw new NotSupportedException("Cannot retrieve window handle while in Unity Editor");
 #endif
         void ApplicationInputActions.IWindowActions.OnPosition(InputAction.CallbackContext context)
         {
@@ -50,7 +51,7 @@ namespace Wanko.Runtime.Managers
             
             Instance = this;
 #if !UNITY_EDITOR
-            HWnd = User32.GetActiveWindow();
+            hWnd = User32.GetActiveWindow();
 #endif
         }
 
@@ -65,19 +66,17 @@ namespace Wanko.Runtime.Managers
             _actions.Disable();
             _actions.RemoveCallbacks(this);
         }
-#if !UNITY_EDITOR
-        // make conversion helper
-        // internal?
+
         public unsafe void SetClickthrough(bool clickthrough)
         {
-            // make 2nd arg class member
-            User32.SetWindowLongFlags dwLong = (User32.SetWindowLongFlags)(int)User32.GetWindowLongPtr(HWnd, GWL_EXSTYLE);
+#if !UNITY_EDITOR
+            User32.SetWindowLongFlags dwLong = (User32.SetWindowLongFlags)(int)User32.GetWindowLongPtr(hWnd, GWL_EXSTYLE);
             dwLong = clickthrough
                 ? dwLong | WS_EX_TRANSPARENT
                 : dwLong & ~WS_EX_TRANSPARENT;
 
-            User32.SetWindowLongPtr(HWnd, GWL_EXSTYLE, (void*)(int)dwLong);
-        }
+            User32.SetWindowLongPtr(hWnd, GWL_EXSTYLE, (void*)(int)dwLong);
 #endif
+        }
     }
 }

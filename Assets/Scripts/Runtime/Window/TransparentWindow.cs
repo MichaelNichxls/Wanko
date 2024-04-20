@@ -18,12 +18,12 @@ namespace Wanko.Runtime.Window
         {
             MARGINS margins = new() { cxLeftWidth = -1 };
 
-            DwmApi.DwmExtendFrameIntoClientArea(WindowManager.Instance.HWnd, ref margins);
-            User32.SetWindowPos(WindowManager.Instance.HWnd, HWND_TOPMOST, 0, 0, 0, 0, 0);
+            DwmApi.DwmExtendFrameIntoClientArea(WindowManager.Instance.hWnd, ref margins);
+            User32.SetWindowPos(WindowManager.Instance.hWnd, HWND_TOPMOST, 0, 0, 0, 0, 0);
 
             Camera.main.backgroundColor = Color.clear;
 
-            User32.SetWindowLongPtr(WindowManager.Instance.HWnd, GWL_EXSTYLE, (void*)(int)WS_EX_LAYERED);
+            User32.SetWindowLongPtr(WindowManager.Instance.hWnd, GWL_EXSTYLE, (void*)(int)WS_EX_LAYERED);
             WindowManager.Instance.SetClickthrough(true);
         }
 #endif
