@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Wanko.Runtime.Managers;
+using Wanko.Runtime.Utilities;
 
 namespace Wanko.Runtime.Controllers
 {
@@ -11,23 +12,16 @@ namespace Wanko.Runtime.Controllers
     public sealed class CubismModelController : MonoBehaviour, ApplicationInputActions.ICubismModelActions, IWindowClickthroughHandler
     {
         private CubismRaycaster _raycaster;
-        private ApplicationInputActions.CubismModelActions _cubismModelActions;
-        private Vector3 _position, _offset, _scale;
+        private ApplicationInputActions.CubismModelActions _actions;
+        private DummyTransform _target;
 
-        public CubismRaycastHit[] RaycastHit { get; private set; } = new CubismRaycastHit[1]; // move definition
+        public CubismRaycastHit[] RaycastHit { get; private set; }
         public bool HasRaycastHit { get; private set; }
 
-        // indent? // IDraggable & IScalable
         [field: SerializeField]
-        public float DragSpeed { get; private set; } = 10f;
+        public Drag Drag { get; private set; }
         [field: SerializeField]
-        public float ScaleMin { get; private set; } = 1f;
-        [field: SerializeField]
-        public float ScaleMax { get; private set; } = 20f;
-        [field: SerializeField]
-        public float ScaleFactor { get; private set; } = .5f;
-        [field: SerializeField]
-        public float ScaleSpeed { get; private set; } = 10f;
+        public Scale Scale { get; private set; }
 
         void ApplicationInputActions.ICubismModelActions.OnPosition(InputAction.CallbackContext context)
         {
@@ -42,9 +36,6 @@ namespace Wanko.Runtime.Controllers
             if (!context.performed || !HasRaycastHit)
                 return;
 
-            _position = Camera.main.ScreenToWorldPoint(_cubismModelActions.Position.ReadValue<Vector2>());
-            _offset = transform.position - _position;
-
             StartCoroutine(OnDrag(context));
         }
 
@@ -53,9 +44,9 @@ namespace Wanko.Runtime.Controllers
             if (!context.performed || !HasRaycastHit)
                 return;
 
-            _scale += context.ReadValue<Vector2>().y / 120f * ScaleFactor * Vector3.one;
-            _scale = Vector3.Min(_scale, ScaleMax * Vector3.one);
-            _scale = Vector3.Max(_scale, ScaleMin * Vector3.one);
+            _target.Scale += context.ReadValue<Vector2>().y / 120f * Scale.Factor * Vector3.one;
+            _target.Scale = Vector3.Min(_target.Scale, Scale.Max * Vector3.one);
+            _target.Scale = Vector3.Max(_target.Scale, Scale.Min * Vector3.one);
         }
 
         bool IWindowClickthroughHandler.SetClickthrough(Vector3 position) =>
@@ -63,41 +54,49 @@ namespace Wanko.Runtime.Controllers
 
         private IEnumerator OnDrag(InputAction.CallbackContext context)
         {
+            _target.Position = Camera.main.ScreenToWorldPoint(_actions.Position.ReadValue<Vector2>());
+            Vector3 offset = transform.position - _target.Position;
+
             while (context.ReadValueAsButton())
             {
-                _position = Camera.main.ScreenToWorldPoint(_cubismModelActions.Position.ReadValue<Vector2>());
+                _target.Position = Camera.main.ScreenToWorldPoint(_actions.Position.ReadValue<Vector2>()) + offset;
                 yield return null;
             }
+        }
+
+        private void Reset()
+        {
+            Drag = new() { Speed = 10f };
+            Scale = new() { Min = 1f, Max = 20f, Factor = .5f, Speed = 10f };
         }
 
         private void Awake()
         {
             _raycaster = GetComponent<CubismRaycaster>();
-            _cubismModelActions = new ApplicationInputActions().CubismModel;
+            _actions = new ApplicationInputActions().CubismModel;
+
+            RaycastHit = new CubismRaycastHit[1];
         }
 
         private void OnEnable()
         {
-            _cubismModelActions.Enable();
-            _cubismModelActions.AddCallbacks(this);
+            _actions.Enable();
+            _actions.AddCallbacks(this);
         }
 
         private void OnDisable()    
         {
-            _cubismModelActions.Disable();
-            _cubismModelActions.RemoveCallbacks(this);
+            _actions.Disable();
+            _actions.RemoveCallbacks(this);
         }
 
-        private void Start()
-        {
-            _position = transform.position;
-            _scale = transform.localScale;
-        }
+        private void Start() =>
+            _target = (DummyTransform)transform;
 
         private void Update()
         {
-            transform.position = Vector3.Lerp(transform.position, _position + _offset, Time.deltaTime * DragSpeed);
-            transform.localScale = Vector3.Lerp(transform.localScale, _scale, Time.deltaTime * ScaleSpeed);
+            transform.position = Vector3.Lerp(transform.position, _target.Position, Time.deltaTime * Drag.Speed);
+            transform.localScale = Vector3.Lerp(transform.localScale, _target.Scale, Time.deltaTime * Scale.Speed);
         }
     }
 }

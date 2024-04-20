@@ -14,9 +14,9 @@ namespace Wanko.Runtime.Managers
     [DisallowMultipleComponent]
     public sealed class WindowManager : MonoBehaviour, ApplicationInputActions.IWindowActions
     {
-        private ApplicationInputActions.WindowActions _windowActions;
+        private ApplicationInputActions.WindowActions _actions;
 #pragma warning disable IDE0052
-        private IEnumerable<IWindowClickthroughHandler> _windowClickthroughHandlers;
+        private IEnumerable<IWindowClickthroughHandler> _clickthroughHandlers;
 #pragma warning restore IDE0052
 
         public static WindowManager Instance { get; private set; }
@@ -30,10 +30,10 @@ namespace Wanko.Runtime.Managers
         void ApplicationInputActions.IWindowActions.OnPosition(InputAction.CallbackContext context)
         {
 #if !UNITY_EDITOR
-            if (context.phase != InputActionPhase.Performed)
+            if (!context.performed)
                 return;
             
-            SetClickthrough(!_windowClickthroughHandlers.Any(handler => !handler.SetClickthrough(context.ReadValue<Vector2>())));
+            SetClickthrough(!_clickthroughHandlers.Any(handler => !handler.SetClickthrough(context.ReadValue<Vector2>())));
 #endif
         }
 
@@ -45,8 +45,8 @@ namespace Wanko.Runtime.Managers
                 return;
             }
 
-            _windowActions = new ApplicationInputActions().Window;
-            _windowClickthroughHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IWindowClickthroughHandler>();
+            _actions = new ApplicationInputActions().Window;
+            _clickthroughHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IWindowClickthroughHandler>();
             
             Instance = this;
 #if !UNITY_EDITOR
@@ -56,14 +56,14 @@ namespace Wanko.Runtime.Managers
 
         private void OnEnable()
         {
-            _windowActions.Enable();
-            _windowActions.AddCallbacks(this);
+            _actions.Enable();
+            _actions.AddCallbacks(this);
         }
 
         private void OnDisable()
         {
-            _windowActions.Disable();
-            _windowActions.RemoveCallbacks(this);
+            _actions.Disable();
+            _actions.RemoveCallbacks(this);
         }
 #if !UNITY_EDITOR
         // make conversion helper

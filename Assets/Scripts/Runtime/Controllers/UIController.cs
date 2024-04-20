@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Wanko.Runtime.Managers;
+using Wanko.Runtime.Utilities;
 
 namespace Wanko.Runtime.Controllers
 {
@@ -8,50 +9,47 @@ namespace Wanko.Runtime.Controllers
     public sealed class UIController : MonoBehaviour, IDragHandler, IScrollHandler, IWindowClickthroughHandler
     {
         private RectTransform _rectTransform;
-        private Vector3 _position, _offset, _scale;
+        private DummyTransform _target;
 
         [field: SerializeField]
-        public float DragSpeed { get; private set; } = 10f;
+        public Drag Drag { get; private set; }
         [field: SerializeField]
-        public float ScaleMin { get; private set; } = .5f;
-        [field: SerializeField]
-        public float ScaleMax { get; private set; } = 4f;
-        [field: SerializeField]
-        public float ScaleFactor { get; private set; } = .1f;
-        [field: SerializeField]
-        public float ScaleSpeed { get; private set; } = 10f;
+        public Scale Scale { get; private set; }
 
         void IDragHandler.OnDrag(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
 
-            _position += (Vector3)eventData.delta;
+            _target.Position += (Vector3)eventData.delta;
         }
 
         void IScrollHandler.OnScroll(PointerEventData eventData)
         {
-            _scale += eventData.scrollDelta.y / 6f * ScaleFactor * Vector3.one;
-            _scale = Vector3.Min(_scale, ScaleMax * Vector3.one);
-            _scale = Vector3.Max(_scale, ScaleMin * Vector3.one);
+            _target.Scale += eventData.scrollDelta.y / 6f * Scale.Factor * Vector3.one;
+            _target.Scale = Vector3.Min(_target.Scale, Scale.Max * Vector3.one);
+            _target.Scale = Vector3.Max(_target.Scale, Scale.Min * Vector3.one);
         }
 
         bool IWindowClickthroughHandler.SetClickthrough(Vector3 position) =>
             !EventSystem.current.IsPointerOverGameObject();
 
+        private void Reset()
+        {
+            Drag = new() { Speed = 10f };
+            Scale = new() { Min = .5f, Max = 4f, Factor = .1f, Speed = 10f };
+        }
+
         private void Awake() =>
             _rectTransform = transform as RectTransform;
 
-        private void Start()
-        {
-            _position = _rectTransform.position;
-            _scale = _rectTransform.localScale;
-        }
+        private void Start() =>
+            _target = (DummyTransform)_rectTransform;
 
         private void Update()
         {
-            _rectTransform.position = Vector3.Lerp(_rectTransform.position, _position + _offset, Time.deltaTime * DragSpeed);
-            _rectTransform.localScale = Vector3.Lerp(_rectTransform.localScale, _scale, Time.deltaTime * ScaleSpeed);
+            _rectTransform.position = Vector3.Lerp(_rectTransform.position, _target.Position, Time.deltaTime * Drag.Speed);
+            _rectTransform.localScale = Vector3.Lerp(_rectTransform.localScale, _target.Scale, Time.deltaTime * Scale.Speed);
         }
     }
 }

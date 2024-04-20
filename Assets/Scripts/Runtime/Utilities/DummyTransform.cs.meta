@@ -1,10 +1,9 @@
 fileFormatVersion: 2
-guid: f09a14fcadecd26439c7ea00789cf946
+guid: ebd15f9838e71644597877ad245d83c1
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - <VisualTree>k__BackingField: {fileID: 9197481963319205126, guid: de368b287f54c53468714e1b1768a06c, type: 3}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
