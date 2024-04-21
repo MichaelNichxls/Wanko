@@ -19,7 +19,7 @@ namespace Wanko.Runtime.Native
         [DllImport(nameof(User32), SetLastError = true)]
         public static extern int SetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex, SetWindowLongFlags dwNewLong);
 
-        [DllImport(nameof(User32), SetLastError = true, CharSet = CharSet.Unicode)]
+        [DllImport(nameof(User32), SetLastError = true)]
         public static extern int GetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex);
 
         [DllImport(nameof(User32), SetLastError = true, EntryPoint = "SetWindowLongPtr")]
