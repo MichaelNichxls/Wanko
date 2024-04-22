@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Dev",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "wanko.${fileBasenameNoExtension}",
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Mina",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "wanko.${fileBasenameNoExtension}",
+            "envFile": "${workspaceFolder}/.env.mina",
+            "console": "externalTerminal"
+        }
+    ]
+}
