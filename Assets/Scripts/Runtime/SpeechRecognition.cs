@@ -24,7 +24,7 @@ namespace Wanko.Runtime // meow this is being stupid with the namespaces
             PythonRuntime.PythonDLL = @"python312.dll"; // can also be absolute path
             
             PythonEngine.Initialize();
-            PythonEngine.BeginAllowThreads();
+            //PythonEngine.BeginAllowThreads();
         }
 
         private void Start()

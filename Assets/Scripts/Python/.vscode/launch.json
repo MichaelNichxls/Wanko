@@ -6,6 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "wanko.${fileBasenameNoExtension}",
+            "envFile": "${workspaceFolder}/.env",
             "console": "externalTerminal"
         },
         {
