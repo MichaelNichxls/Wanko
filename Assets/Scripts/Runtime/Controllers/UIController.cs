@@ -31,7 +31,7 @@ namespace Wanko.Runtime.Controllers
             _target.Scale = Vector3.Max(_target.Scale, Scale.Min * Vector3.one);
         }
 
-        bool IWindowClickthroughHandler.SetClickthrough(Vector3 position) =>
+        bool IWindowClickthroughHandler.SetClickthrough(Vector2 position) =>
             !EventSystem.current.IsPointerOverGameObject();
 
         private void Reset()

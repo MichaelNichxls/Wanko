@@ -25,6 +25,8 @@ namespace Wanko.Runtime // meow this is being stupid with the namespaces
             
             PythonEngine.Initialize();
             //PythonEngine.BeginAllowThreads();
+
+            //Application.persistentDataPath
         }
 
         private void Start()

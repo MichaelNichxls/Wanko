@@ -1,5 +1,5 @@
 {
-    "name": "InputActions",
+    "name": "ApplicationInputActions",
     "maps": [
         {
             "name": "UI",
@@ -252,34 +252,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "ScrollWheel",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                }
-            ]
-        },
-        {
-            "name": "Window",
-            "id": "abcd32ed-d165-4aab-85f7-4dd11ea8a26f",
-            "actions": [
-                {
-                    "name": "Position",
-                    "type": "PassThrough",
-                    "id": "8265a3bb-4a73-4cfe-bc0f-0b6de975d27b",
-                    "expectedControlType": "Vector2",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                }
-            ],
-            "bindings": [
-                {
-                    "name": "",
-                    "id": "013873cf-7e5f-4439-8f06-54ab3de45802",
-                    "path": "<Mouse>/position",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Position",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

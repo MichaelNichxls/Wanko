@@ -282,34 +282,6 @@ namespace Wanko.Runtime
             ]
         },
         {
-            ""name"": ""Window"",
-            ""id"": ""abcd32ed-d165-4aab-85f7-4dd11ea8a26f"",
-            ""actions"": [
-                {
-                    ""name"": ""Position"",
-                    ""type"": ""PassThrough"",
-                    ""id"": ""8265a3bb-4a73-4cfe-bc0f-0b6de975d27b"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""013873cf-7e5f-4439-8f06-54ab3de45802"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Position"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                }
-            ]
-        },
-        {
             ""name"": ""CubismModel"",
             ""id"": ""41fb999f-be0d-4898-bd83-a672996b351e"",
             ""actions"": [
@@ -390,9 +362,6 @@ namespace Wanko.Runtime
             m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
             m_UI_Submit = m_UI.FindAction("Submit", throwIfNotFound: true);
             m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
-            // Window
-            m_Window = asset.FindActionMap("Window", throwIfNotFound: true);
-            m_Window_Position = m_Window.FindAction("Position", throwIfNotFound: true);
             // CubismModel
             m_CubismModel = asset.FindActionMap("CubismModel", throwIfNotFound: true);
             m_CubismModel_Position = m_CubismModel.FindAction("Position", throwIfNotFound: true);
@@ -558,52 +527,6 @@ namespace Wanko.Runtime
         }
         public UIActions @UI => new UIActions(this);
 
-        // Window
-        private readonly InputActionMap m_Window;
-        private List<IWindowActions> m_WindowActionsCallbackInterfaces = new List<IWindowActions>();
-        private readonly InputAction m_Window_Position;
-        public struct WindowActions
-        {
-            private @ApplicationInputActions m_Wrapper;
-            public WindowActions(@ApplicationInputActions wrapper) { m_Wrapper = wrapper; }
-            public InputAction @Position => m_Wrapper.m_Window_Position;
-            public InputActionMap Get() { return m_Wrapper.m_Window; }
-            public void Enable() { Get().Enable(); }
-            public void Disable() { Get().Disable(); }
-            public bool enabled => Get().enabled;
-            public static implicit operator InputActionMap(WindowActions set) { return set.Get(); }
-            public void AddCallbacks(IWindowActions instance)
-            {
-                if (instance == null || m_Wrapper.m_WindowActionsCallbackInterfaces.Contains(instance)) return;
-                m_Wrapper.m_WindowActionsCallbackInterfaces.Add(instance);
-                @Position.started += instance.OnPosition;
-                @Position.performed += instance.OnPosition;
-                @Position.canceled += instance.OnPosition;
-            }
-
-            private void UnregisterCallbacks(IWindowActions instance)
-            {
-                @Position.started -= instance.OnPosition;
-                @Position.performed -= instance.OnPosition;
-                @Position.canceled -= instance.OnPosition;
-            }
-
-            public void RemoveCallbacks(IWindowActions instance)
-            {
-                if (m_Wrapper.m_WindowActionsCallbackInterfaces.Remove(instance))
-                    UnregisterCallbacks(instance);
-            }
-
-            public void SetCallbacks(IWindowActions instance)
-            {
-                foreach (var item in m_Wrapper.m_WindowActionsCallbackInterfaces)
-                    UnregisterCallbacks(item);
-                m_Wrapper.m_WindowActionsCallbackInterfaces.Clear();
-                AddCallbacks(instance);
-            }
-        }
-        public WindowActions @Window => new WindowActions(this);
-
         // CubismModel
         private readonly InputActionMap m_CubismModel;
         private List<ICubismModelActions> m_CubismModelActionsCallbackInterfaces = new List<ICubismModelActions>();
@@ -675,10 +598,6 @@ namespace Wanko.Runtime
             void OnNavigate(InputAction.CallbackContext context);
             void OnSubmit(InputAction.CallbackContext context);
             void OnCancel(InputAction.CallbackContext context);
-        }
-        public interface IWindowActions
-        {
-            void OnPosition(InputAction.CallbackContext context);
         }
         public interface ICubismModelActions
         {

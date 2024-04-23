@@ -4,6 +4,6 @@ namespace Wanko.Runtime.Managers
 {
     public interface IWindowClickthroughHandler
     {
-        bool SetClickthrough(Vector3 position);
+        bool SetClickthrough(Vector2 position);
     }
 }

@@ -43,5 +43,7 @@ class Config:
     with _ENV.prefixed("LOGGING__"):
         LOGGING__LEVEL: logging                                 = _ENV.log_level("LEVEL")
 
+CONFIG = Config()
+
 logging.basicConfig(level=Config.LOGGING__LEVEL)
-logging.info(pformat(Config()))
+logging.info(pformat(CONFIG))

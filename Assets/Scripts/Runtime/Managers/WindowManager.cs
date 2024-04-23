@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
 #if !UNITY_EDITOR
+using UnityEngine.InputSystem;
 using Wanko.Runtime.Native;
 using static Wanko.Runtime.Native.User32.SetWindowLongFlags;
 using static Wanko.Runtime.Native.User32.WindowLongIndexFlags;
@@ -12,9 +12,8 @@ using static Wanko.Runtime.Native.User32.WindowLongIndexFlags;
 namespace Wanko.Runtime.Managers
 {
     [DisallowMultipleComponent]
-    public sealed class WindowManager : MonoBehaviour, ApplicationInputActions.IWindowActions
+    public sealed class WindowManager : MonoBehaviour
     {
-        private ApplicationInputActions.WindowActions _actions;
 #pragma warning disable IDE0052
         private IEnumerable<IWindowClickthroughHandler> _clickthroughHandlers;
 #pragma warning restore IDE0052
@@ -28,16 +27,6 @@ namespace Wanko.Runtime.Managers
 #else
             => throw new NotSupportedException("Cannot retrieve window handle while in Unity Editor");
 #endif
-        void ApplicationInputActions.IWindowActions.OnPosition(InputAction.CallbackContext context)
-        {
-#if !UNITY_EDITOR
-            if (!context.performed)
-                return;
-            
-            SetClickthrough(!_clickthroughHandlers.Any(handler => !handler.SetClickthrough(context.ReadValue<Vector2>())));
-#endif
-        }
-
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -46,27 +35,17 @@ namespace Wanko.Runtime.Managers
                 return;
             }
 
-            _actions = new ApplicationInputActions().Window;
             _clickthroughHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IWindowClickthroughHandler>();
-            
+
             Instance = this;
 #if !UNITY_EDITOR
             hWnd = User32.GetActiveWindow();
 #endif
         }
-
-        private void OnEnable()
-        {
-            _actions.Enable();
-            _actions.AddCallbacks(this);
-        }
-
-        private void OnDisable()
-        {
-            _actions.Disable();
-            _actions.RemoveCallbacks(this);
-        }
-
+#if !UNITY_EDITOR
+        private void LateUpdate() =>
+            SetClickthrough(!_clickthroughHandlers.Any(handler => !handler.SetClickthrough(Mouse.current.delta.ReadValue())));
+#endif
         public unsafe void SetClickthrough(bool clickthrough)
         {
 #if !UNITY_EDITOR
