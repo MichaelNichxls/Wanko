@@ -1,7 +1,10 @@
 import logging
 import speech_recognition as sr
 
+from typing import Callable
+
 from .config import Config
+from .transcribe import Transcriber
 
 class Recognizer:
     def __init__(self) -> None:
@@ -24,20 +27,20 @@ class Recognizer:
         if Config.SR__REC__ADJUST_FOR_AMBIENT_NOISE:
             with self._source:
                 self._recorder.adjust_for_ambient_noise(self._source)
-
+        
+        logging.info("Recognizer initialized")
+    
+    def listen_in_background(self, callback: Callable[[sr.AudioSource, sr.AudioData], None]) -> None:
+        self._recorder.listen_in_background(self._source, callback)
+    
+    def transcribe_in_background(self, transcriber: Transcriber) -> None:
         def record_callback(_, audio: sr.AudioData) -> None:
             """
             Threaded callback function to receive audio data when recordings finish.
             audio: An AudioData containing the recorded bytes.
             """
             data: bytes = audio.get_raw_data()
-            print("Meow")
-
-        self._recorder.listen_in_background(self._source, record_callback)
-        logging.info("Recognizer initialized")
-    
-    # def listen_in_background
-        # audio_data = b"".join(data)
-
-        # transcription = self.transcribe(self, audio_data)
-        # print(transcription)
+            transcription = transcriber.transcribe_bytes(data)
+            logging.info(transcription)
+        
+        self.listen_in_background(self, record_callback)

@@ -2,7 +2,7 @@ import logging
 import numpy as np
 
 from faster_whisper import WhisperModel
-# from typing import BinaryIO, Union
+from typing import BinaryIO, Union
 
 from .config import Config
 
@@ -20,13 +20,11 @@ class Transcriber:
         )
         logging.info("Transcriber initialized")
 
-    # transcribe_bytes
-    def transcribe(self, audio: bytes) -> str:
+    def transcribe_bytes(self, audio: bytes) -> str:
         audio_np = np.frombuffer(audio, dtype=np.int16).astype(np.float32) / 32_768.0
-        
-        segments, _ = self._model.transcribe(audio_np)
+        return self.transcribe(audio_np)
+    
+    def transcribe(self, audio: Union[str, BinaryIO, np.ndarray]) -> str:
+        segments, _ = self._model.transcribe(audio)
         transcription = " ".join([segment.text.strip() for segment in segments])
-
-        # TODO: Log transcription with debug level in finally block
-        # TODO: send via event
         return transcription

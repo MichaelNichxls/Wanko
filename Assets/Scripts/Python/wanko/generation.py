@@ -79,7 +79,8 @@ class Generator:
         self._client = PyCAI(Config.CAI__CHAR_TOKEN)
         self._chat = Chat(**self._client.chat.get_chat(Config.CAI__CHAR))
         self._chat_tgt = [participant.user.username for participant in self._chat.participants if not participant.is_human][0]
+        
+        logging.info("Generator initialized")
     
     def send_message(self, message: str) -> Response:
         return Response(**self._client.chat.send_message(self._chat.external_id, self._chat_tgt, message))
-        # name, text = response.src_char.participant.name, response.replies[0].text
