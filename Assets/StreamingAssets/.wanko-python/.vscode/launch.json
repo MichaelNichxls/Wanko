@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Module (dev)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "wanko",
+            "env": {
+                "LOG_LEVEL": "DEBUG"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Python Debugger: Module (mina)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "wanko",
+            "env": {
+                "LOG_LEVEL": "INFO",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "True"
+            },
+            "envFile": "${workspaceFolder}/.env.mina",
+            "console": "externalTerminal"
+        }
+    ]
+}

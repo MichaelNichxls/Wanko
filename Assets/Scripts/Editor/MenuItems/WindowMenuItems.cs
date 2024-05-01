@@ -1,7 +1,6 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using Wanko.Runtime.Managers;
 using Wanko.Runtime.Window;
 
 namespace Wanko.Editor.MenuItems

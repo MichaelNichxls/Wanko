@@ -1,6 +1,5 @@
 using UnityEngine;
 #if !UNITY_EDITOR
-using Wanko.Runtime.Managers;
 using Wanko.Runtime.Native;
 using static Wanko.Runtime.Native.User32.SetWindowLongFlags;
 using static Wanko.Runtime.Native.User32.SpecialWindowHandles;

@@ -1,0 +1,9 @@
+# python._pth
+#
+# this file was added by PythonEmbed4Win.ps1
+.\Scripts
+.
+# standard libraries
+.\Lib
+# importing site will run sitecustomize.py
+import site
