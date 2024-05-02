@@ -8,9 +8,11 @@ logging.basicConfig(level=_ENV.log_level("LOG_LEVEL", logging.INFO))
 from .generation import Generator
 from .recognition import Recognizer
 from .transcribe import Transcriber
+from .version import __version__
 
 __all__ = [
     "Generator",
     "Recognizer",
-    "Transcriber"
+    "Transcriber",
+    "__version__"
 ]

@@ -22,6 +22,6 @@ try:
         name, reply = response.src_char.participant.name, response.replies[0].text
         LOGGING.info("%s: %s", name, reply)
 
-except KeyboardInterrupt as e:
-    LOGGING.exception(str(e))
+except KeyboardInterrupt:
+    LOGGING.info("Session ended")
     pass
