@@ -7,11 +7,12 @@ namespace Wanko.Runtime.Native
     {
         [DllImport(nameof(User32), SetLastError = true)]
         public static extern IntPtr GetActiveWindow();
-#if EXPERIMENTAL
+
+        [Obsolete]
         [DllImport(nameof(User32), SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool LockSetForegroundWindow(LockSetForegroundWindowFlags uLockCode);
-#endif
+
         [DllImport(nameof(User32), SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, SetWindowPosFlags uFlags);

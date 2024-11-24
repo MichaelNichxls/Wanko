@@ -1,51 +1,33 @@
 using Python.Runtime;
 using System;
-using System.Diagnostics;
 using System.IO;
 using UnityEngine;
 using PythonRuntime = Python.Runtime.Runtime;
 
 namespace Wanko.Runtime
 {
-    [DisallowMultipleComponent]
-    internal sealed class PythonEnvironmentSetup : MonoBehaviour
+    // PythonManager?
+    public static class PythonEnvironmentSetup
     {
-        public static readonly string WankoPythonHome;
+        public static readonly string PyWankoHome;
         public static readonly string PythonHome;
         public static readonly string PythonDLL;
         public static readonly string PythonPath;
 
         static PythonEnvironmentSetup()
         {
-            WankoPythonHome = Path.Combine(Application.streamingAssetsPath, ".wanko-python");
-            PythonHome = Path.Combine(Application.streamingAssetsPath, ".python-3.12.2-embed-amd64");
+            PyWankoHome = Path.Combine(Application.streamingAssetsPath, "pywanko");
+            PythonHome = Directory.GetDirectories(Application.streamingAssetsPath, "python-*-embed-*")[0];
             PythonDLL = Path.Combine(PythonHome, "python312.dll");
             PythonPath = string.Join(
                 ';',
                 new[]
                 {
-                    WankoPythonHome,
+                    PyWankoHome,
                     PythonHome,
                     Path.Combine(PythonHome, "Lib"),
                     Path.Combine(PythonHome, @"Lib\site-packages")
                 });
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void OnSubsystemRegistration()
-        {
-            // TODO: Make into separate script
-            using Process process = new()
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = $"\"{Path.Combine(PythonHome, "python.exe")}\"",
-                    Arguments = $"-m pip install -r \"{Path.Combine(WankoPythonHome, "requirements.txt")}\""
-                }
-            };
-
-            process.Start();
-            process.WaitForExit();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -59,6 +41,8 @@ namespace Wanko.Runtime
             PythonEngine.PythonPath = PythonPath;
 
             PythonEngine.Initialize();
+
+            Application.quitting += PythonEngine.Shutdown;
         }
     }
 }

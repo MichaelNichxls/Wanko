@@ -12,7 +12,7 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: MichaelNichxls
+  companyName: Yucchi Games
   productName: Wanko
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
@@ -135,9 +135,8 @@ PlayerSettings:
   vulkanEnableLateAcquireNextImage: 0
   vulkanEnableCommandBufferRecycling: 1
   loadStoreDebugModeEnabled: 0
-  bundleVersion: 1.0.0-alpha.2
-  preloadedAssets:
-  - {fileID: 11400000, guid: 347b2ccc5dd798c449c7318762d8cff6, type: 2}
+  bundleVersion: 1.0.0-alpha.3
+  preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -157,7 +156,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Standalone: com.MichaelNichxls.Wanko
+    Standalone: com.Yucchi-Games.Wanko
   buildNumber:
     Standalone: 0
     VisionOS: 0

@@ -2,82 +2,65 @@ using Live2D.Cubism.Framework.Raycasting;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Wanko.Runtime.Utilities.Wrappers;
+using Wanko.Runtime.Utilities.Serializable;
 using Wanko.Runtime.Window;
+using static Wanko.InputActions;
 
 namespace Wanko.Runtime.Cubism
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CubismRaycaster))]
-    public sealed class CubismModelController : MonoBehaviour, ApplicationInputActions.ICubismModelActions, IWindowClickthroughHandler
+    public sealed class CubismModelController : MonoBehaviour, ICubismModelActions, IWindowTransparentHandler
     {
         private CubismRaycaster _raycaster;
-        private ApplicationInputActions.CubismModelActions _actions;
+        private CubismModelActions _actions;
         private DummyTransform _target;
 
-        public CubismRaycastHit[] RaycastHit { get; private set; }
-        public bool HasRaycastHit { get; private set; }
+        public CubismRaycastHit[] RaycastHit { get; } = new CubismRaycastHit[1];
+        public bool HasRaycastHit => _raycaster.Raycast(Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue()), RaycastHit) > 0;
 
         [field: SerializeField]
-        public Drag Drag { get; private set; }
+        public MoveOptions Move { get; private set; } = new() { Speed = 10f };
         [field: SerializeField]
-        public Scale Scale { get; private set; }
+        public ScaleOptions Scale { get; private set; } = new() { Min = 1f, Max = 20f, Factor = .5f, Speed = 10f };
 
-        void ApplicationInputActions.ICubismModelActions.OnPosition(InputAction.CallbackContext context)
-        {
-            if (!context.performed)
-                return;
-
-            HasRaycastHit = _raycaster.Raycast(Camera.main.ScreenPointToRay(context.ReadValue<Vector2>()), RaycastHit) > 0;
-        }
-
-        void ApplicationInputActions.ICubismModelActions.OnClick(InputAction.CallbackContext context)
+        void ICubismModelActions.OnMove(InputAction.CallbackContext context)
         {
             if (!context.performed || !HasRaycastHit)
                 return;
 
-            StartCoroutine(OnDrag(context));
-        }
+            _ = StartCoroutine(OnMoveCoroutine());
 
-        void ApplicationInputActions.ICubismModelActions.OnScroll(InputAction.CallbackContext context)
-        {
-            if (!context.performed || !HasRaycastHit)
-                return;
-
-            _target.Scale += context.ReadValue<Vector2>().y / 120f * Scale.Factor * Vector3.one;
-            _target.Scale = Vector3.Min(_target.Scale, Scale.Max * Vector3.one);
-            _target.Scale = Vector3.Max(_target.Scale, Scale.Min * Vector3.one);
-        }
-
-        bool IWindowClickthroughHandler.SetClickthrough(Vector2 position) =>
-            !HasRaycastHit;
-
-        private IEnumerator OnDrag(InputAction.CallbackContext context)
-        {
-            _target.Position = Camera.main.ScreenToWorldPoint(_actions.Position.ReadValue<Vector2>());
-            Vector3 offset = transform.position - _target.Position;
-
-            while (context.ReadValueAsButton())
+            IEnumerator OnMoveCoroutine()
             {
-                _target.Position = Camera.main.ScreenToWorldPoint(_actions.Position.ReadValue<Vector2>()) + offset;
-                yield return null;
+                _target.position = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+                Vector3 offset = transform.position - _target.position;
+
+                while (context.ReadValueAsButton())
+                {
+                    _target.position = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue()) + offset;
+                    yield return null;
+                }
             }
-
-            HasRaycastHit = _raycaster.Raycast(Camera.main.ScreenPointToRay(_actions.Position.ReadValue<Vector2>()), RaycastHit) > 0;
         }
 
-        private void Reset()
+        void ICubismModelActions.OnScale(InputAction.CallbackContext context)
         {
-            Drag = new() { Speed = 10f };
-            Scale = new() { Min = 1f, Max = 20f, Factor = .5f, Speed = 10f };
+            if (!context.performed || !HasRaycastHit)
+                return;
+            
+            _target.localScale += context.ReadValue<Vector2>().y / 120f * Scale.Factor * Vector3.one;
+            _target.localScale = Vector3.Min(_target.localScale, Scale.Max * Vector3.one);
+            _target.localScale = Vector3.Max(_target.localScale, Scale.Min * Vector3.one);
         }
+
+        bool IWindowTransparentHandler.SetTransparent(Vector2 position) =>
+            !HasRaycastHit;
 
         private void Awake()
         {
             _raycaster = GetComponent<CubismRaycaster>();
-            _actions = new ApplicationInputActions().CubismModel;
-
-            RaycastHit = new CubismRaycastHit[1];
+            _actions = new InputActions().CubismModel;
         }
 
         private void OnEnable()
@@ -97,8 +80,8 @@ namespace Wanko.Runtime.Cubism
 
         private void Update()
         {
-            transform.position = Vector3.Lerp(transform.position, _target.Position, Time.deltaTime * Drag.Speed);
-            transform.localScale = Vector3.Lerp(transform.localScale, _target.Scale, Time.deltaTime * Scale.Speed);
+            transform.position = Vector3.Lerp(transform.position, _target.position, Time.deltaTime * Move.Speed);
+            transform.localScale = Vector3.Lerp(transform.localScale, _target.localScale, Time.deltaTime * Scale.Speed);
         }
     }
 }
