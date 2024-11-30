@@ -1,5 +1,10 @@
 {
-    "templatePinStates": [],
+    "templatePinStates": [
+        {
+            "templateId": "Empty",
+            "isEnabled": true
+        }
+    ],
     "dependencyTypeInfos": [
         {
             "userAdded": false,
@@ -59,6 +64,11 @@
         {
             "userAdded": false,
             "type": "UnityEngine.PhysicMaterial",
+            "defaultInstantiationMode": 0
+        },
+        {
+            "userAdded": false,
+            "type": "UnityEngine.PhysicsMaterial",
             "defaultInstantiationMode": 0
         },
         {

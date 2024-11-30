@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>CharacterAI-NET-API-Wrapper</id>
+    <version>1.0.1</version>
+    <authors>drizzle-mizzle</authors>
+    <description>Package Description</description>
+    <tags>CharacterAI AI</tags>
+    <repository type="git" commit="f5264b16d10721dc88f1108a644b2ad5ddd05729" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="PuppeteerRestClient" version="1.0.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
